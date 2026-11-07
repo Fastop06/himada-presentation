@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Himada — Презентация</title>
+  <style>
+    :root {
+      --bg: #07090e;
+      --card-bg: rgba(255, 255, 255, 0.04);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-hover: rgba(56, 189, 248, 0.2);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --cyan: #38bdf8;
+      --emerald: #34d399;
+      --indigo: #818cf8;
+      --red: #f87171;
+      --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+      --font-mono: "SF Mono", "JetBrains Mono", Menlo, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Ambient background gradient meshes */
+    .ambient-bg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .ambient-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(140px);
+      opacity: 0.22;
+      transition: all 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .orb-1 {
+      width: 650px;
+      height: 650px;
+      background: radial-gradient(circle, #38bdf8 0%, transparent 70%);
+      top: -150px;
+      right: -100px;
+    }
+
+    .orb-2 {
+      width: 750px;
+      height: 750px;
+      background: radial-gradient(circle, #6366f1 0%, transparent 70%);
+      bottom: -200px;
+      left: -150px;
+    }
+
+    /* Subtle grid overlay */
+    .grid-overlay {
+      position: fixed;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 70px 70px;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Ultra-thin top progress line */
+    .top-progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.04);
+      z-index: 100;
+    }
+
+    .top-progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #38bdf8, #818cf8, #34d399);
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.7);
+      transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    /* Invisible navigation click zones (STRICTLY NO BUTTONS) */
+    .nav-zone-left {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 25%;
+      height: 100%;
+      z-index: 10;
+      cursor: default;
+    }
+
+    .nav-zone-right {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 75%;
+      height: 100%;
+      z-index: 10;
+      cursor: default;
+    }
+
+    /* Main Presentation Container */
+    .presentation {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      padding: clamp(30px, 6vh, 60px) clamp(30px, 8vw, 110px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transform: scale(0.96) translateY(20px);
+      transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                  visibility 0.5s ease;
+      pointer-events: none;
+    }
+
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      transform: scale(1) translateY(0);
+      pointer-events: auto;
+    }
+
+    /* Slide Titles & Typography */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: var(--cyan);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      margin-bottom: 16px;
+      width: fit-content;
+    }
+
+    .title {
+      font-size: clamp(36px, 4.6vw, 62px);
+      font-weight: 800;
+      line-height: 1.12;
+      letter-spacing: -0.03em;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #ffffff 40%, #cbd5e1 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      font-size: clamp(18px, 1.8vw, 24px);
+      font-weight: 400;
+      line-height: 1.45;
+      color: var(--text-muted);
+      max-width: 900px;
+      margin-bottom: 36px;
+    }
+
+    /* Grid cards */
+    .grid {
+      display: grid;
+      gap: 22px;
+      width: 100%;
+    }
+
+    .grid-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .grid-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 30px;
+      backdrop-filter: blur(16px);
+      transition: all 0.35s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.18), transparent);
+    }
+
+    .card:hover {
+      border-color: var(--card-hover);
+      transform: translateY(-3px);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .card-icon {
+      font-size: 38px;
+      margin-bottom: 16px;
+      display: inline-block;
+    }
+
+    .card-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 10px;
+      letter-spacing: -0.01em;
+    }
+
+    .card-text {
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--text-muted);
+    }
+
+    .card-stat {
+      font-size: clamp(38px, 3.8vw, 54px);
+      font-weight: 800;
+      font-family: var(--font-sans);
+      line-height: 1;
+      margin-bottom: 10px;
+      letter-spacing: -0.03em;
+    }
+
+    .stat-cyan {
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .stat-green {
+      background: linear-gradient(135deg, #34d399, #10b981);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Comparison Split Screen (Before vs After) */
+    .compare-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      width: 100%;
+    }
+
+    .compare-card {
+      border-radius: 20px;
+      padding: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(16px);
+      position: relative;
+    }
+
+    .compare-bad {
+      background: rgba(239, 68, 68, 0.035);
+      border-color: rgba(239, 68, 68, 0.2);
+    }
+
+    .compare-good {
+      background: rgba(52, 211, 153, 0.04);
+      border-color: rgba(52, 211, 153, 0.3);
+      box-shadow: 0 0 40px rgba(52, 211, 153, 0.07);
+    }
+
+    .compare-tag {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .compare-bad .compare-tag { color: var(--red); }
+    .compare-good .compare-tag { color: var(--emerald); }
+
+    /* Visual Steps Pipeline */
+    .pipeline-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 20px 0;
+      flex-wrap: wrap;
+    }
+
+    .step-pill {
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .step-pill.bad {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      color: #fca5a5;
+    }
+
+    .step-pill.good {
+      background: rgba(52, 211, 153, 0.12);
+      border: 1px solid rgba(52, 211, 153, 0.35);
+      color: #6ee7b7;
+    }
+
+    .step-arrow {
+      color: var(--text-dim);
+      font-size: 16px;
+    }
+
+    /* Speed Bar Comparison */
+    .speed-meter {
+      margin-top: 24px;
+    }
+
+    .speed-row {
+      margin-bottom: 14px;
+    }
+
+    .speed-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
+    .speed-track {
+      height: 12px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .speed-fill-bad {
+      height: 100%;
+      width: 28%;
+      background: rgba(239, 68, 68, 0.7);
+      border-radius: 999px;
+    }
+
+    .speed-fill-good {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, #38bdf8, #34d399);
+      border-radius: 999px;
+      box-shadow: 0 0 16px rgba(52, 211, 153, 0.5);
+    }
+
+    /* HUD Flash Toast (for double-cmd fullscreen) */
+    .hud-toast {
+      position: fixed;
+      top: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      padding: 10px 22px;
+      background: rgba(15, 23, 42, 0.92);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      border-radius: 9999px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.2);
+      font-size: 13px;
+      font-weight: 600;
+      color: #f8fafc;
+      letter-spacing: 0.04em;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 1000;
+      pointer-events: none;
+      backdrop-filter: blur(16px);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .hud-toast.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Floating slide indicator (Tiny & subtle, NO bar) */
+    .slide-dot-count {
+      position: fixed;
+      bottom: 24px;
+      right: 32px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.25);
+      z-index: 50;
+      pointer-events: none;
+      letter-spacing: 0.1em;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient light effects -->
+  <div class="ambient-bg">
+    <div class="ambient-orb orb-1" id="orb1"></div>
+    <div class="ambient-orb orb-2" id="orb2"></div>
+  </div>
+  <div class="grid-overlay"></div>
+
+  <!-- Ultra-thin top progress line -->
+  <div class="top-progress">
+    <div class="top-progress-bar" id="progressBar"></div>
+  </div>
+
+  <!-- Invisible click zones for navigation (No buttons) -->
+  <div class="nav-zone-left" id="zoneLeft" title=""></div>
+  <div class="nav-zone-right" id="zoneRight" title=""></div>
+
+  <!-- HUD Toast for double-cmd full screen -->
+  <div class="hud-toast" id="hudToast">
+    <span style="color: var(--cyan); font-weight: 700;">⌘⌘</span>
+    <span id="hudToastText">Полноэкранный режим</span>
+  </div>
+
+  <!-- Discreet slide number in bottom corner (No background bar) -->
+  <div class="slide-dot-count" id="slideIndicator">01 / 06</div>
+
+  <!-- Main Presentation Slides -->
+  <main class="presentation">
+
+    <!-- SLIDE 1: Intro / The Core Idea (0:00 - 0:45) -->
+    <section class="slide active" data-slide="1">
+      <div class="badge">⚡ Умное ускорение программ</div>
+      <h1 class="title">HIMADA</h1>
+      <p class="subtitle">
+        Автопилот максимальной скорости для любого процессора.<br>
+        Ваш компьютер намного мощнее, чем думают программы — Himada заставляет его работать на 100% без лишних настроек.
+      </p>
+
+      <div class="grid grid-3">
+        <div class="card">
+          <div class="card-stat stat-cyan">До 4x</div>
+          <div class="card-title">Быстрее вычисления</div>
+          <div class="card-text">
+            Математика, обработка массивов и искусственный интеллект ускоряются в несколько раз на том же самом оборудовании.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-stat stat-green">0 строк</div>
+          <div class="card-title">Сложного кода</div>
+          <div class="card-text">
+            Разработчикам не нужно изучать ассемблер и микроархитектуры. Himada делает всю магию незаметно в фоне.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-stat stat-cyan">100%</div>
+          <div class="card-title">Поддержка платформ</div>
+          <div class="card-text">
+            Идеально адаптируется под любой чип: Apple Mac M-серии, процессоры Intel и AMD, смартфоны и серверы.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 2: The Real Problem (0:45 - 1:30) -->
+    <section class="slide" data-slide="2">
+      <div class="badge">⚠️ Проблема индустрии</div>
+      <h2 class="title">Почему компьютеры работают вполсилы?</h2>
+      <p class="subtitle">
+        Простая аналогия: вы купили спорткар с мощным двигателем, но программа едет только на первой передаче.
+      </p>
+
+      <div class="compare-container">
+        <div class="compare-card compare-bad">
+          <div class="compare-tag">🛑 Как устроено сейчас</div>
+          <h3 style="font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 12px;">Программы пишут «под всех»</h3>
+          <p class="card-text">
+            Чтобы приложение запустилось на любом компьютере, компилятор делает его самым простым и медленным. В итоге <strong>до 75% мощности вашего процессора просто простаивает</strong>.
+          </p>
+          <div style="margin-top: 24px; padding: 14px; background: rgba(239, 68, 68, 0.08); border-radius: 12px; font-size: 14px; color: #fca5a5;">
+            ❌ Разработчикам приходится писать десятки версий одного и того же кода вручную — это долго, дорого и приводит к ошибкам.
+          </div>
+        </div>
+
+        <div class="compare-card compare-good">
+          <div class="compare-tag">✅ Как решает Himada</div>
+          <h3 style="font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 12px;">Умная подстройка под чип</h3>
+          <p class="card-text">
+            Himada смотрит на конкретный процессор прямо перед запуском и <strong>активирует специальные блоки ускорения (SIMD)</strong>, созданные специально для этого железа.
+          </p>
+          <div style="margin-top: 24px; padding: 14px; background: rgba(52, 211, 153, 0.08); border-radius: 12px; font-size: 14px; color: #6ee7b7;">
+            ✨ Один и тот же код автоматически летит с максимальной скоростью и на MacBook, и на игровом ПК, и в облаке.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 3: How it Works (1:30 - 2:20) -->
+    <section class="slide" data-slide="3">
+      <div class="badge">🔍 Принцип работы</div>
+      <h2 class="title">Как это работает? Всего 3 простых шага</h2>
+      <p class="subtitle">
+        Полная автоматика за миллисекунды при запуске приложения.
+      </p>
+
+      <div class="grid grid-3">
+        <div class="card">
+          <div class="card-icon">🔎</div>
+          <div class="card-title">1. Сканирование (1 мс)</div>
+          <div class="card-text">
+            Himada мгновенно определяет параметры процессора: скорость памяти, кэш и поддерживаемые инструкции.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">⚡</div>
+          <div class="card-title">2. Тест-драйв</div>
+          <div class="card-text">
+            За микросекунды тестирует доступные методы вычислений на реальных данных и выбирает абсолютного победителя.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">🚀</div>
+          <div class="card-title">3. Турбо-режим</div>
+          <div class="card-text">
+            Включает самую быструю версию и объединяет несколько операций в один поток без лишней перезаписи в память.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 4: Fusion & Visual Speedup (2:20 - 3:15) -->
+    <section class="slide" data-slide="4">
+      <div class="badge">🏎️ Наглядная разница</div>
+      <h2 class="title">Победа над очередями в памяти</h2>
+      <p class="subtitle">
+        Самый частый тормоз в программах — постоянное сохранение промежуточных результатов в оперативную память.
+      </p>
+
+      <div class="compare-container">
+        <div class="compare-card compare-bad">
+          <div class="compare-tag">🐢 Обычный подход: Постоянные задержки</div>
+          <div class="pipeline-row">
+            <span class="step-pill bad">Шаг 1</span>
+            <span class="step-arrow">➔</span>
+            <span style="font-size: 13px; color: #94a3b8;">RAM</span>
+            <span class="step-arrow">➔</span>
+            <span class="step-pill bad">Шаг 2</span>
+            <span class="step-arrow">➔</span>
+            <span style="font-size: 13px; color: #94a3b8;">RAM</span>
+            <span class="step-arrow">➔</span>
+            <span class="step-pill bad">Шаг 3</span>
+          </div>
+          <p class="card-text">
+            Процессор тратит больше времени на ожидание доставки данных из памяти, чем на сами расчеты (212 микросекунд).
+          </p>
+        </div>
+
+        <div class="compare-card compare-good">
+          <div class="compare-tag">⚡ С Himada: Один непрерывный проход</div>
+          <div class="pipeline-row">
+            <span class="step-pill good">Шаг 1 + Шаг 2 + Шаг 3 (Вместе)</span>
+            <span class="step-arrow">➔</span>
+            <span class="step-pill good" style="background: rgba(52, 211, 153, 0.25);">Готовый результат</span>
+          </div>
+          <p class="card-text">
+            Все действия выполняются прямо внутри регистров чипа за один цикл. <strong>Время: 59 микросекунд — в 3.6 раза быстрее!</strong>
+          </p>
+        </div>
+      </div>
+
+      <!-- Live Speed Meter -->
+      <div class="speed-meter">
+        <div class="speed-row">
+          <div class="speed-label">
+            <span style="color: var(--text-muted);">Обычный код (Без адаптации)</span>
+            <span style="color: var(--red);">Базовая скорость</span>
+          </div>
+          <div class="speed-track"><div class="speed-fill-bad"></div></div>
+        </div>
+
+        <div class="speed-row">
+          <div class="speed-label">
+            <span style="color: #fff; font-weight: 700;">С библиотекой Himada</span>
+            <span style="color: var(--emerald); font-weight: 700;">+260% ускорения (Рекордная скорость)</span>
+          </div>
+          <div class="speed-track"><div class="speed-fill-good"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 5: Real-World Benefits (3:15 - 4:10) -->
+    <section class="slide" data-slide="5">
+      <div class="badge">💡 Практическая польза</div>
+      <h2 class="title">Что это даёт в реальных продуктах?</h2>
+      <p class="subtitle">
+        Преимущества, которые ощущают и пользователи, и владельцы сервисов.
+      </p>
+
+      <div class="grid grid-3">
+        <div class="card">
+          <div class="card-icon">🤖</div>
+          <div class="card-title">Быстрый ИИ на клиенте</div>
+          <div class="card-text">
+            Нейросети и обработка речи/текста работают прямо на ноутбуке или телефоне пользователя мгновенно и без интернета.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">🔋</div>
+          <div class="card-title">Экономия батареи</div>
+          <div class="card-text">
+            Быстрые вычисления означают, что процессор раньше возвращается в спящий режим. Ноутбуки работают заметно дольше.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">💰</div>
+          <div class="card-title">Снижение затрат на сервера</div>
+          <div class="card-text">
+            Серверы справляются с втрое большей нагрузкой. Компаниям требуется меньше облачных машин для обслуживания пользователей.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 6: Summary / Conclusion (4:10 - 5:00) -->
+    <section class="slide" data-slide="6">
+      <div class="badge">🎯 Финал</div>
+      <h2 class="title">Максимальная скорость — на автопилоте</h2>
+      <p class="subtitle">
+        Himada объединяет простоту разработки с предельной производительностью кремния.
+      </p>
+
+      <div class="grid grid-3" style="margin-bottom: 28px;">
+        <div class="card">
+          <div class="card-title">👨‍💻 Разработчикам</div>
+          <div class="card-text">
+            Пишите стандартный код на привычном языке (Rust, TypeScript, Python). Himada ускорит его автоматически.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🚀 Пользователям</div>
+          <div class="card-text">
+            Молниеносный отклик интерфейсов, плавная работа с большими данными и отсутствие зависаний.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🛡️ Надежность</div>
+          <div class="card-text">
+            140+ строгих автоматических тестов, открытый исходный код и лицензия MIT для любых проектов.
+          </div>
+        </div>
+      </div>
+
+      <div style="padding: 16px 24px; background: rgba(56, 189, 248, 0.06); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 14px; text-align: center; color: var(--cyan); font-weight: 600; font-size: 16px;">
+        github.com/Fastop06/himada &nbsp;&bull;&nbsp; Открытый проект для современного вычисления
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    (function() {
+      // Presentation State
+      const slides = Array.from(document.querySelectorAll('.slide'));
+      const totalSlides = slides.length;
+      let currentSlide = 0;
+      
+      const progressBar = document.getElementById('progressBar');
+      const slideIndicator = document.getElementById('slideIndicator');
+      const hudToast = document.getElementById('hudToast');
+      const hudToastText = document.getElementById('hudToastText');
+
+      function updateSlide(index) {
+        if (index < 0) index = 0;
+        if (index >= totalSlides) index = totalSlides - 1;
+        currentSlide = index;
+
+        slides.forEach((slide, i) => {
+          if (i === currentSlide) {
+            slide.classList.add('active');
+          } else {
+            slide.classList.remove('active');
+          }
+        });
+
+        // Update progress bar
+        const progress = ((currentSlide + 1) / totalSlides) * 100;
+        progressBar.style.width = progress + '%';
+
+        // Update discreet counter
+        slideIndicator.textContent = `${String(currentSlide + 1).padStart(2, '0')} / ${String(totalSlides).padStart(2, '0')}`;
+
+        // Subtle ambient orb shift
+        const orb1 = document.getElementById('orb1');
+        const orb2 = document.getElementById('orb2');
+        if (orb1 && orb2) {
+          orb1.style.transform = `translate(${Math.sin(index) * 60}px, ${Math.cos(index) * 40}px)`;
+          orb2.style.transform = `translate(${Math.cos(index) * -50}px, ${Math.sin(index) * -40}px)`;
+        }
+      }
+
+      function nextSlide() {
+        if (currentSlide < totalSlides - 1) updateSlide(currentSlide + 1);
+      }
+
+      function prevSlide() {
+        if (currentSlide > 0) updateSlide(currentSlide - 1);
+      }
+
+      // HUD Toast notification
+      let hudTimer = null;
+      function showToast(msg) {
+        hudToastText.textContent = msg;
+        hudToast.classList.add('show');
+        if (hudTimer) clearTimeout(hudTimer);
+        hudTimer = setTimeout(() => {
+          hudToast.classList.remove('show');
+        }, 1400);
+      }
+
+      // Safe Fullscreen toggling with cross-browser fallbacks
+      function toggleFullscreen() {
+        const doc = document;
+        const docEl = document.documentElement;
+        const isFullscreen = !!(doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement);
+
+        if (!isFullscreen) {
+          const req = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
+          if (req) {
+            try {
+              const promise = req.call(docEl);
+              if (promise && typeof promise.then === 'function') {
+                promise.then(() => showToast('Полноэкранный режим'))
+                       .catch(() => showToast('Полноэкранный режим'));
+              } else {
+                showToast('Полноэкранный режим');
+              }
+            } catch (err) {
+              showToast('Полноэкранный режим');
+            }
+          }
+        } else {
+          const exit = doc.exitFullscreen || doc.webkitExitFullscreen || doc.mozCancelFullScreen || doc.msExitFullscreen;
+          if (exit) {
+            try {
+              const promise = exit.call(doc);
+              if (promise && typeof promise.then === 'function') {
+                promise.then(() => showToast('Оконный режим'))
+                       .catch(() => showToast('Оконный режим'));
+              } else {
+                showToast('Оконный режим');
+              }
+            } catch (err) {
+              showToast('Оконный режим');
+            }
+          }
+        }
+      }
+
+      // DOUBLE CMD KEY LISTENER (Requirement: "при нажатии дважды cmd на полный экран переходит в браузере")
+      let lastCmdTime = 0;
+      const DOUBLE_CMD_THRESHOLD = 380; // ms window for double tap
+
+      window.addEventListener('keydown', (e) => {
+        const isCmd = e.key === 'Meta' || e.code === 'MetaLeft' || e.code === 'MetaRight';
+        const isCtrl = e.key === 'Control' || e.code === 'ControlLeft' || e.code === 'ControlRight';
+
+        if (isCmd || isCtrl) {
+          const now = Date.now();
+          if (now - lastCmdTime < DOUBLE_CMD_THRESHOLD && (now - lastCmdTime) > 40) {
+            toggleFullscreen();
+            lastCmdTime = 0;
+            e.preventDefault();
+            return;
+          }
+          lastCmdTime = now;
+          return;
+        }
+
+        // Standard presentation keyboard navigation
+        switch(e.code) {
+          case 'Space':
+          case 'ArrowRight':
+          case 'ArrowDown':
+          case 'PageDown':
+            e.preventDefault();
+            nextSlide();
+            break;
+          case 'ArrowLeft':
+          case 'ArrowUp':
+          case 'PageUp':
+          case 'Backspace':
+            e.preventDefault();
+            prevSlide();
+            break;
+          case 'Home':
+            e.preventDefault();
+            updateSlide(0);
+            break;
+          case 'End':
+            e.preventDefault();
+            updateSlide(totalSlides - 1);
+            break;
+          case 'Digit1': case 'Digit2': case 'Digit3':
+          case 'Digit4': case 'Digit5': case 'Digit6':
+            const num = parseInt(e.key, 10);
+            if (num >= 1 && num <= totalSlides) {
+              updateSlide(num - 1);
+            }
+            break;
+        }
+      });
+
+      // Mouse Wheel Navigation (Debounced)
+      let wheelTimeout = null;
+      window.addEventListener('wheel', (e) => {
+        if (wheelTimeout) return;
+        if (Math.abs(e.deltaY) > 30 || Math.abs(e.deltaX) > 30) {
+          if (e.deltaY > 0 || e.deltaX > 0) {
+            nextSlide();
+          } else {
+            prevSlide();
+          }
+          wheelTimeout = setTimeout(() => {
+            wheelTimeout = null;
+          }, 450);
+        }
+      }, { passive: true });
+
+      // Touch Swipe Navigation (for iPads & touch screens)
+      let touchStartX = 0;
+      let touchStartY = 0;
+      window.addEventListener('touchstart', (e) => {
+        if (e.changedTouches && e.changedTouches[0]) {
+          touchStartX = e.changedTouches[0].clientX;
+          touchStartY = e.changedTouches[0].clientY;
+        }
+      }, { passive: true });
+
+      window.addEventListener('touchend', (e) => {
+        if (!e.changedTouches || !e.changedTouches[0]) return;
+        const diffX = e.changedTouches[0].clientX - touchStartX;
+        const diffY = e.changedTouches[0].clientY - touchStartY;
+        if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY)) {
+          if (diffX < 0) {
+            nextSlide();
+          } else {
+            prevSlide();
+          }
+        }
+      }, { passive: true });
+
+      // Invisible Click Zones (Strictly without any buttons)
+      const zoneLeft = document.getElementById('zoneLeft');
+      const zoneRight = document.getElementById('zoneRight');
+      
+      zoneLeft.addEventListener('click', () => {
+        if (window.getSelection().toString().length === 0) prevSlide();
+      });
+
+      zoneRight.addEventListener('click', () => {
+        if (window.getSelection().toString().length === 0) nextSlide();
+      });
+
+      // Initialize
+      updateSlide(0);
+    })();
+  </script>
+</body>
+</html>
